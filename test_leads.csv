@@ -1,0 +1,6 @@
+nome,cognome,email,telefono,azienda,ruolo,settore,n_dipendenti,fatturato,area_geografica,sito_web
+Marco,Ferretti,m.ferretti@consulenzaferretti.it,+39 02 4512 3890,Ferretti Consulting Srl,CEO,Consulenza direzionale,18,2400000,Milano,https://www.consulenzaferretti.it
+Giulia,Marchetti,g.marchetti@marchettistudio.it,+39 051 7823 441,Marchetti Studio Associato,Managing Partner,Servizi legali e fiscali,12,1800000,Bologna,https://www.marchettistudio.it
+Luca,Esposito,l.esposito@esposito-advisory.it,+39 081 3341 720,Esposito Advisory Srl,Direttore Generale,Consulenza finanziaria,25,3100000,Napoli,https://www.esposito-advisory.it
+Alessandra,Conti,a.conti@contihrpartner.it,+39 011 9021 334,Conti HR Partner Srl,CEO,Risorse umane e selezione,9,950000,Torino,https://www.contihrpartner.it
+Roberto,Galli,r.galli@gallisystemsrl.it,+39 055 6612 887,Galli System Srl,Amministratore Delegato,IT consulting e system integration,32,4700000,Firenze,https://www.gallisystemsrl.it
