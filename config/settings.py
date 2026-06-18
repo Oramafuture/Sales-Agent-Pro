@@ -33,6 +33,10 @@ class Settings:
     soglia_b: float = 0.50
     min_confidenza: float = 0.60
 
+    # Soglie per classificare PMI vs azienda strutturata (usate nell'email writer)
+    soglia_pmi_dipendenti: int = 20
+    soglia_pmi_fatturato: float = 2_000_000.0
+
     # Gestione follow-up e sequenze
     tentativi_max: int = 5
     stale_days: int = 30
@@ -55,6 +59,8 @@ class Settings:
             tentativi_max=int(os.environ.get("TENTATIVI_MAX", cls.tentativi_max)),
             stale_days=int(os.environ.get("STALE_DAYS", cls.stale_days)),
             urgency_window=int(os.environ.get("URGENCY_WINDOW", cls.urgency_window)),
+            soglia_pmi_dipendenti=int(os.environ.get("SOGLIA_PMI_DIPENDENTI", cls.soglia_pmi_dipendenti)),
+            soglia_pmi_fatturato=float(os.environ.get("SOGLIA_PMI_FATTURATO", cls.soglia_pmi_fatturato)),
         )
 
     @classmethod
@@ -94,6 +100,8 @@ class Settings:
             tentativi_max=int(get("tentativi_max", base.tentativi_max)),
             stale_days=int(get("stale_days", base.stale_days)),
             urgency_window=int(get("urgency_window", base.urgency_window)),
+            soglia_pmi_dipendenti=int(get("soglia_pmi_dipendenti", base.soglia_pmi_dipendenti)),
+            soglia_pmi_fatturato=float(get("soglia_pmi_fatturato", base.soglia_pmi_fatturato)),
         )
 
     @classmethod

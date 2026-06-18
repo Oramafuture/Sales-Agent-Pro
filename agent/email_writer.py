@@ -100,20 +100,62 @@ def genera_email_primo_contatto(lead: dict, s=None) -> dict:
             f'è irrilevante per questo lead e non va mai citato.'
         )
 
+    # Classifica il lead: PMI o azienda strutturata
+    n_dip = lead.get("n_dipendenti") or 0
+    fatturato = lead.get("fatturato") or 0.0
+    is_pmi = (n_dip <= s.soglia_pmi_dipendenti) and (fatturato <= s.soglia_pmi_fatturato)
+    tipo_azienda = "PMI" if is_pmi else "azienda strutturata"
+
     sistema = """\
 Sei il responsabile commerciale di Orama Energy & Projects, una società di consulenza energetica \
 per PMI italiane. Il tuo compito è scrivere email di primo contatto calde, autentiche e \
 consulenziali — non da venditore, ma da professionista che vuole capire se può essere utile.
 
 IDENTITA' DI ORAMA ENERGY:
-- Non vende una percentuale di risparmio generica, non fa promesse numeriche
+- Non vende percentuali di risparmio generiche, non fa promesse numeriche
 - Il vero valore è: portare ordine, controllo e prevedibilità sulla voce energia, \
 che per molti imprenditori è fonte di ansia e incertezza
-- Offre: consulenza energetica, gestione delle commodity, monitoraggio dei consumi
+- Servizi offerti: consulenza energetica personalizzata, gestione delle commodity energetiche \
+(luce e gas), monitoraggio e controllo dei consumi
 - Il cliente ideale è qualsiasi PMI che oggi vive l'energia come costo imprevedibile \
-e vuole qualcuno di fiducia che se ne occupi per loro, liberando tempo mentale
+e vuole qualcuno di fiducia che se ne occupi per loro
 - Approccio umano, non tecnocratico: parla la lingua dell'imprenditore, non del tecnico
 - Forte esperienza consolidata nel settore RSA e sanità privata (mai nomi di clienti)"""
+
+    # Istruzioni comuni a entrambi i tipi: posizionamento come outsourcing
+    outsourcing_note = """\
+POSIZIONAMENTO CHIAVE (valido sempre):
+- Non sappiamo se il destinatario gestisca personalmente l'energia o se lo faccia qualcun altro \
+  in azienda: non importa — il messaggio è che Orama Energy diventa il referente esterno \
+  che se ne occupa in toto, come un vero servizio in outsourcing
+- L'energia smette di essere un'incombenza aziendale da delegare internamente: c'è qualcuno \
+  fuori che la gestisce con professionalità, liberando tempo e risorse interne
+- Mai assumere che il destinatario "segua le bollette di persona": parla dell'azienda, non solo \
+  di lui/lei"""
+
+    if is_pmi:
+        istruzioni_tono = f"""\
+Il lead è una PICCOLA IMPRESA ({n_dip} dip., fatturato {int(fatturato):,} EUR).
+- Tono caldo, umano, diretto — come se parlassi con l'imprenditore di persona
+- Focus su: Orama come outsourcing energetico che elimina un'incombenza aziendale, \
+  restituisce tempo e serenità, porta prevedibilità di spesa
+- Non entrare nei dettagli tecnici dei servizi, basta evocare che ci siamo noi a occuparcene
+- Cala il messaggio sul settore "{settore}" e sul ruolo "{ruolo}": \
+  cosa guadagna l'azienda quando smette di occuparsi di energia internamente?
+{outsourcing_note}"""
+    else:
+        fatturato_fmt = f"{fatturato / 1_000_000:.1f}M" if fatturato >= 1_000_000 else f"{int(fatturato / 1_000)}K"
+        istruzioni_tono = f"""\
+Il lead è un'AZIENDA STRUTTURATA ({n_dip} dip., fatturato {fatturato_fmt} EUR).
+- Tono professionale, consulenziale, con più contenuto concreto
+- Presenta Orama come outsourcing energetico a tutti gli effetti: \
+  consulenza personalizzata, gestione delle commodity luce e gas, monitoraggio consumi
+- Tocca temi rilevanti per organizzazioni più grandi: prevedibilità di budget, \
+  reportistica chiara, eventuale gestione multi-sito, riduzione del carico gestionale interno
+- L'azienda non deve più dedicare risorse interne alla gestione energia: \
+  c'è un partner esterno specializzato che se ne occupa
+- Rimani concreto ma senza promesse numeriche
+{outsourcing_note}"""
 
     prompt = f"""{sistema}
 
@@ -124,14 +166,14 @@ Destinatario: {nome} {cognome}, {ruolo} di {azienda}
 Settore del lead: {settore}
 Link Calendly per video call 15 minuti: {s.calendly_link}
 
-REGOLE TASSATIVE:
+TIPO DI AZIENDA E TONO:
+{istruzioni_tono}
+
+REGOLE TASSATIVE (valide per tutti):
 - Subject: massimo 10 parole, specifico per il settore, non generico
-- Body: massimo 130 parole, tono caldo, consulenziale, umano — non robotico
+- Body: massimo 130 parole
 - Inizia con "Buongiorno {nome},"
 - Presentati come {s.tuo_nome} di {s.tua_azienda} in modo naturale (una riga)
-- Centra il messaggio su: controllo dei costi energia, prevedibilità di spesa, \
-serenità operativa — calato sul contesto specifico del settore "{settore}" \
-e sul ruolo "{ruolo}" (cosa significa per loro l'energia imprevedibile nel loro lavoro quotidiano?)
 - NON inventare percentuali di risparmio (niente "25%", "30%" o simili)
 - NON usare frasi generiche vuote come "ottimizzare i processi"
 - Chiudi proponendo SOLO la video call Calendly di 15 minuti: {s.calendly_link}
@@ -145,21 +187,18 @@ Rispondi SOLO con questo formato JSON, senza testo aggiuntivo prima o dopo:
   "body": "..."
 }}"""
 
-    print(f"[EmailWriter] Genero email primo contatto per {nome} {cognome} ({settore})...")
+    print(f"[EmailWriter] Genero email primo contatto per {nome} {cognome} ({settore}) [{tipo_azienda}]...")
     testo = _chiedi_claude(prompt)
 
     try:
-        pulito = testo.strip()
-        # Rimuovi eventuali backtick markdown
-        if pulito.startswith("```"):
-            pulito = pulito.split("```", 2)[-1] if pulito.count("```") >= 2 else pulito
-            pulito = pulito.removeprefix("json").strip().removesuffix("```").strip()
-        # Trova il primo { e l'ultimo } per estrarre solo il JSON
-        start = pulito.index("{")
-        end = pulito.rindex("}") + 1
-        dati = json.loads(pulito[start:end])
+        # Estrai il blocco JSON cercando il primo { e l'ultimo } — robusto a backtick markdown
+        start = testo.index("{")
+        end = testo.rindex("}") + 1
+        dati = json.loads(testo[start:end])
         subject = dati.get("subject", "").strip()
         body = dati.get("body", "").strip()
+        if not subject or not body:
+            raise ValueError("subject o body vuoti")
     except (json.JSONDecodeError, ValueError, AttributeError):
         subject = "Una riflessione sui costi energia per la vostra azienda"
         body = testo
@@ -233,11 +272,14 @@ Rispondi SOLO con questo formato JSON (nessun testo aggiuntivo):
 
     import json
     try:
-        pulito = testo.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
-        dati = json.loads(pulito)
+        start = testo.index("{")
+        end = testo.rindex("}") + 1
+        dati = json.loads(testo[start:end])
         subject = dati.get("subject", "").strip()
         body = dati.get("body", "").strip()
-    except (json.JSONDecodeError, AttributeError):
+        if not subject or not body:
+            raise ValueError("subject o body vuoti")
+    except (json.JSONDecodeError, ValueError, AttributeError):
         subject = "Qualificazione rapida — 3 domande"
         body = testo
 
