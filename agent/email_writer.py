@@ -23,7 +23,7 @@ _claude = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
 def _chiedi_claude(prompt: str) -> str:
     risposta = _claude.messages.create(
         model="claude-opus-4-8",
-        max_tokens=512,
+        max_tokens=1500,
         thinking={"type": "adaptive"},
         messages=[{"role": "user", "content": prompt}],
     )
@@ -134,28 +134,65 @@ POSIZIONAMENTO CHIAVE (valido sempre):
   di lui/lei"""
 
     if is_pmi:
+        max_parole_body = 130
+        istruzione_apertura = f'Inizia con "Buongiorno {nome},"'
         istruzioni_tono = f"""\
 Il lead è una PICCOLA IMPRESA ({n_dip} dip., fatturato {int(fatturato):,} EUR).
-- Tono caldo, umano, diretto — come se parlassi con l'imprenditore di persona
-- Focus su: Orama come outsourcing energetico che elimina un'incombenza aziendale, \
-  restituisce tempo e serenità, porta prevedibilità di spesa
-- Non entrare nei dettagli tecnici dei servizi, basta evocare che ci siamo noi a occuparcene
-- Cala il messaggio sul settore "{settore}" e sul ruolo "{ruolo}": \
-  cosa guadagna l'azienda quando smette di occuparsi di energia internamente?
-{outsourcing_note}"""
+- REGISTRO LINGUISTICO: consulenziale e professionale per tutto il messaggio, \
+  anche nelle parti più morbide o aperte. Mai colloquiale, mai da conversazione informale. \
+  Vietate formule come "vi sentite già a posto", "siete a posto sull'energia", \
+  "se non avete problemi" — sostituiscile con costruzioni più curate, es.: \
+  "Se lato utenze vi sentiste già seguiti, ci piacerebbe comunque presentare la nostra realtà, \
+  valutando se vi siano altri ambiti di contenimento costi o efficientamento in cui possiamo essere utili."
+- NON presupporre che l'energia sia un problema per il lead: non affermare mai che "pesa", \
+  "ruba tempo" o "crea ansia" come dato di fatto. Trasforma queste premesse in DOMANDE aperte.
+- SCHEMA DA SEGUIRE (adatta al contesto, non copiare testualmente):
+  1. Apertura breve: chi sei e chi è Orama Energy (una riga)
+  2. Una domanda diretta e professionale: chi gestisce oggi le utenze energetiche? \
+     Se è gestito internamente, quale impegno richiede? — calibra sul settore "{settore}" e ruolo "{ruolo}"
+  3. Posizionamento ampio e consulenziale: Orama Energy gestisce le commodity energetiche, \
+     ma si occupa anche di contenimento dei costi sui servizi aziendali e di efficientamento — \
+     quindi anche chi non ha un'esigenza energetica specifica potrebbe trovare valore in altri ambiti
+  4. CTA professionale: proponi la video call Calendly da 15 minuti come momento di confronto
+- L'obiettivo è incuriosire e aprire un dialogo, anche con chi non percepisce oggi un bisogno energetico
+- Non chiudere mai con affermazioni assolute: mantieni sempre il tono aperto e consulenziale"""
     else:
+        max_parole_body = 140
         fatturato_fmt = f"{fatturato / 1_000_000:.1f}M" if fatturato >= 1_000_000 else f"{int(fatturato / 1_000)}K"
+        istruzione_apertura = f"""\
+Saluto di apertura formale con titolo professionale: deduci il titolo dal ruolo "{ruolo}" e dal \
+settore "{settore}" (es. Dott./Dott.ssa per ruoli dirigenziali in ambito finanziario, legale o \
+sanitario; Ing. per ingegneria e IT; Arch. per architettura; Avv. per ambito legale). \
+Se il titolo non è desumibile con certezza, usa "Buongiorno {nome} {cognome},". \
+MAI usare solo il nome di battesimo. MAI il tu diretto."""
         istruzioni_tono = f"""\
-Il lead è un'AZIENDA STRUTTURATA ({n_dip} dip., fatturato {fatturato_fmt} EUR).
-- Tono professionale, consulenziale, con più contenuto concreto
-- Presenta Orama come outsourcing energetico a tutti gli effetti: \
-  consulenza personalizzata, gestione delle commodity luce e gas, monitoraggio consumi
-- Tocca temi rilevanti per organizzazioni più grandi: prevedibilità di budget, \
-  reportistica chiara, eventuale gestione multi-sito, riduzione del carico gestionale interno
-- L'azienda non deve più dedicare risorse interne alla gestione energia: \
-  c'è un partner esterno specializzato che se ne occupa
-- Rimani concreto ma senza promesse numeriche
-{outsourcing_note}"""
+Il lead è un'AZIENDA ({n_dip} dip., fatturato {fatturato_fmt} EUR).
+- TONO: professionale, autorevole, da consulente esperto che si rivolge a un pari. \
+  Concreto e basato su competenza, strumenti e metodo — non emotivo o empatico-morbido.
+- MAI usare la parola "PMI" riferendosi all'azienda del lead. Usa sempre "azienda" o "realtà".
+- POSIZIONAMENTO CORRETTO: Orama Energy è un consulente specializzato che AFFIANCA il decisore \
+  nelle scelte di acquisto e investimento in ambito energy. NON si presenta come chi "toglie \
+  un fastidio" o come soluzione a una loro mancanza. L'azienda non viene mai descritta o \
+  sottintesa come inefficiente o impreparata sulla gestione energia.
+- VALORE DISTINTIVO DA COMUNICARE (tutti e tre, in modo naturale):
+  1. Utilizzo di strumenti di automazione dedicati per dare una visione chiara \
+     e un focus sui KPI di gestione energetica — NON usare mai "intelligenza artificiale" o "AI"
+  2. Gestione in outsourcing della parte documentale e burocratica legata all'energia
+  3. Il risultato per il cliente: ordine, controllo e prevedibilità della spesa energetica
+- MAI frasi che suonano condiscendenti o che sminuiscono il decisore \
+  (es. "una voce difficile da prevedere", "una piccola incombenza", "non è il vostro mestiere") — \
+  presentalo sempre come affiancamento consulenziale e tecnologico tra professionisti
+- MAI affermare o presupporre che l'azienda sia "in crescita", "dinamica", "strutturata" o \
+  simili giudizi valutativi — usa sempre formule neutre come "una realtà come la vostra" \
+  o "aziende delle vostre dimensioni"
+- SCHEMA DA SEGUIRE (adatta al contesto, non copiare testualmente):
+  1. Presentazione breve e autorevole: chi sei e cosa fa Orama Energy (una riga)
+  2. Aggancio contestuale: collega il valore di Orama al settore "{settore}" \
+     e al ruolo decisionale "{ruolo}" — cosa significa avere un consulente energy dedicato \
+     per un'azienda come la loro?
+  3. I tre elementi distintivi (automazione/KPI, outsourcing documentale, ordine-controllo-prevedibilità) \
+     integrati nel testo in modo fluido, non come lista
+  4. CTA diretta: video call di 15 minuti via Calendly come momento di confronto tra professionisti"""
 
     prompt = f"""{sistema}
 
@@ -171,8 +208,8 @@ TIPO DI AZIENDA E TONO:
 
 REGOLE TASSATIVE (valide per tutti):
 - Subject: massimo 10 parole, specifico per il settore, non generico
-- Body: massimo 130 parole
-- Inizia con "Buongiorno {nome},"
+- Body: massimo {max_parole_body} parole
+- {istruzione_apertura}
 - Presentati come {s.tuo_nome} di {s.tua_azienda} in modo naturale (una riga)
 - NON inventare percentuali di risparmio (niente "25%", "30%" o simili)
 - NON usare frasi generiche vuote come "ottimizzare i processi"
@@ -208,10 +245,28 @@ Rispondi SOLO con questo formato JSON, senza testo aggiuntivo prima o dopo:
 
     _salva_email(lead_id, campaign_id, "first_contact", subject, body)
 
-    print(f"[EmailWriter] OK - Subject: {subject}")
-    print(f"[EmailWriter] OK - Parole nel body: {len(body.split())}")
+    # Registra evento in activities con il segmento calcolato
+    try:
+        client = get_supabase_client()
+        client.table("activities").insert({
+            "lead_id": lead_id,
+            "campaign_id": campaign_id,
+            "tipo": "email_generata",
+            "payload": {
+                "email_tipo": "first_contact",
+                "segmento": tipo_azienda,
+                "subject": subject,
+            },
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }).execute()
+    except Exception as act_err:
+        print(f"[EmailWriter] WARN - activities non salvata: {act_err}")
 
-    return {"subject": subject, "body": body}
+    print(f"[EmailWriter] OK - Segmento  : {tipo_azienda}")
+    print(f"[EmailWriter] OK - Subject   : {subject}")
+    print(f"[EmailWriter] OK - Parole    : {len(body.split())}")
+
+    return {"subject": subject, "body": body, "segmento": tipo_azienda}
 
 
 # ---------------------------------------------------------------------------
@@ -329,7 +384,9 @@ def genera_batch(campaign_id: str, settore_target: str, s=None) -> dict:
         nome_lead = f"{lead.get('nome', '')} {lead.get('cognome', '')}".strip()
         print(f"\n[{i}/{len(leads)}] {nome_lead} (id={lead.get('id')})")
         try:
-            genera_email_primo_contatto(lead, s)
+            risultato = genera_email_primo_contatto(lead, s)
+            segmento = risultato.get("segmento", "?")
+            print(f"  --> CLASSIFICAZIONE: {segmento}")
             n_riusciti += 1
         except Exception as e:
             print(f"[EmailWriter] ERRORE per {nome_lead}: {e}")
